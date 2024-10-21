@@ -1,2 +1,2 @@
-# game_point
+# Circle.io
 Game "Point"
