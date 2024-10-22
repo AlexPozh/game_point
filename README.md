@@ -7,4 +7,4 @@
 3) Открываем папку с помощью редактора кода.
 4) Клониуруем репозиторий через терминал командой `git clone https://github.com/AlexPozh/game_point.git`
 5) Скачиваем все необходимые пакеты командой `pip install -r requirements.txt`
-6) Запускаем файл `main.py`
+6) Запускаем проект командой `python3 main.py` или `python main.py`
