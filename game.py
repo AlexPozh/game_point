@@ -300,7 +300,7 @@ def ask_name(player_num: int) -> str:
 
 def game() -> None:
     """Ф-ция для игры"""
-    player1_name = ask_name(1)
+    # player1_name = ask_name(1)
     clock = pygame.time.Clock()
     
     player_turn = 1
