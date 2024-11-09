@@ -9,10 +9,10 @@ GRID_OFFSET_X = 250
 GRID_OFFSET_Y = 200
 
 # Время игры
-TIMER_START = 10 # 10 минут
+TIMER_START = 600 # 10 минут
 
 # Кол-во очков для выигрыша
-POINTS = 1
+POINTS = 10
 
 # Цвета
 WHITE = (255, 255, 255)

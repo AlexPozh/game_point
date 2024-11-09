@@ -153,7 +153,7 @@ def draw_moves(board: list[list[int]], last_move: tuple[int, int]) -> None:
     for y in range(19):
         for x in range(19):
             if board[y][x] == 1:  # Синий игрок
-                pygame.draw.circle(screen, BLUE, (GRID_OFFSET_X + x * CELL_SIZE, GRID_OFFSET_Y + y * CELL_SIZE), 10)
+                pygame.draw.circle(screen, DARK_BLUE, (GRID_OFFSET_X + x * CELL_SIZE, GRID_OFFSET_Y + y * CELL_SIZE), 10)
             elif board[y][x] == 2:  # Красный игрок
                 pygame.draw.circle(screen, RED, (GRID_OFFSET_X + x * CELL_SIZE, GRID_OFFSET_Y + y * CELL_SIZE), 10)
 
@@ -238,9 +238,69 @@ def draw_winner(text: str) -> None:
         
         pygame.display.update()
 
+
+def check_name(name: str) -> bool:
+    """Ф-ция проверяет введенное имя на соответствие правилам"""
+    if len(name) < 2 or len(name) > 7 or "«,.:@$;\~`”»/<>+-=»" in name:
+        return False
+
+
+def ask_name(player_num: int) -> str:
+    """Функция для ввода имени игрока"""
+    input_box = pygame.Rect(450, 250, 300, 50)
+    color_active = pygame.Color('dodgerblue')
+    color_inactive = pygame.Color('lightskyblue3')
+    color = color_inactive
+    active = False
+    text = ""
+    done = False
+
+    while not done:
+        screen.fill(WHITE)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Если игрок нажимает на поле ввода
+                if input_box.collidepoint(event.pos):
+                    active = not active
+                else:
+                    active = False
+                color = color_active if active else color_inactive
+            elif event.type == pygame.KEYDOWN:
+                if active:
+                    if event.key == pygame.K_RETURN:
+                        # Нажатие Enter завершает ввод
+                        if len(text) == 0:
+                            text = f"Игрок {player_num}"        
+                            done = True
+                        elif check_name(text):
+                            done = True
+                        else:
+                            txt_error = FONT.render(f"Имя должно быть состоять из 2 до 7 элементов и не содержать символы «,.:@$;\~`”»/<>+-=»", True, BLACK)
+                            screen.blit(txt_error, (input_box.x - 300, input_box.y + 70))
+                    elif event.key == pygame.K_BACKSPACE:
+                        # Удаление символа
+                        text = text[:-1]
+                    else:
+                        # Добавление нового символа
+                        text += event.unicode
+
+        # Отрисовка на экране
+        txt_surface = FONT.render(f"Введите имя для игрока {player_num}: " + text, True, BLACK)
+        screen.blit(txt_surface, (input_box.x - 300, input_box.y + 15))
+        pygame.draw.rect(screen, color, input_box, 2)
         
+        # Обновление экрана
+        pygame.display.flip()
+
+    return text
+
 def game() -> None:
     """Ф-ция для игры"""
+    player1_name = ask_name(1)
     clock = pygame.time.Clock()
     
     player_turn = 1
