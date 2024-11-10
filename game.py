@@ -148,15 +148,16 @@ def draw_menu() -> None | bool:
 
 
 
-def draw_moves(board: list[list[int]], last_move: tuple[int, int]) -> None:
+def draw_moves(board: list[list[int]], player1_last_x, player1_last_y, player2_last_x, player2_last_y) -> None:
     """Ф-ция рисует ходы игроков"""
     for y in range(19):
         for x in range(19):
             if board[y][x] == 1:  # Синий игрок
                 pygame.draw.circle(screen, DARK_BLUE, (GRID_OFFSET_X + x * CELL_SIZE, GRID_OFFSET_Y + y * CELL_SIZE), 10)
+                pygame.draw.circle(screen, BLACK,(GRID_OFFSET_X + player1_last_x * CELL_SIZE, GRID_OFFSET_Y + player1_last_y * CELL_SIZE), 5)
             elif board[y][x] == 2:  # Красный игрок
                 pygame.draw.circle(screen, RED, (GRID_OFFSET_X + x * CELL_SIZE, GRID_OFFSET_Y + y * CELL_SIZE), 10)
-
+                pygame.draw.circle(screen, BLACK,(GRID_OFFSET_X + player2_last_x * CELL_SIZE, GRID_OFFSET_Y + player2_last_y * CELL_SIZE), 5)
 def is_fully_surrounded(x: int, y: int, board: list[list[int]], player: int) -> bool:
     """Проверяет, окружена ли группа точек со всех сторон."""
     visited = set()
@@ -320,9 +321,12 @@ def game() -> None:
     # Сетка для отслеживания ходов игроков (0 - пустая клетка, 1 - синий, 2 - красный)
     board = [[0] * 20 for _ in range(20)]
     
-    # Координаты последнего хода
-    last_move = None  
-    
+    # Координаты последнего хода для двух игроков
+    player1_last_x = 0
+    player1_last_y = 0
+    player2_last_x = 0
+    player2_last_y = 0
+
     while True:
         # Заполняем фон белым цветом
         screen.fill(WHITE)
@@ -363,8 +367,12 @@ def game() -> None:
                         points = capture_points(grid_x, grid_y, player_turn, board)
                         if player_turn == 1:
                             player1_score += points
+                            player1_last_x = grid_x
+                            player1_last_y = grid_y
                         else:
                             player2_score += points
+                            player2_last_x = grid_x
+                            player2_last_y = grid_y
 
                     # Передача хода
                     player_turn = 3 - player_turn
@@ -383,7 +391,7 @@ def game() -> None:
         draw_grid()
 
         # Отрисовка последнего хода игрока
-        draw_moves(board, last_move)
+        draw_moves(board, player1_last_x, player1_last_y, player2_last_x, player2_last_y)
                 
         # Отрисовка таймера
         draw_timer(time_left)
