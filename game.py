@@ -148,14 +148,16 @@ def draw_menu() -> None | bool:
         pygame.display.update()
 
 
-def draw_moves(board: list[list[int]], last_move: tuple[int, int]) -> None:
+def draw_moves(board: list[list[int]], player_last_x: int, player_last_y: int) -> None:
     """Ф-ция рисует ходы игроков"""
     for y in range(19):
         for x in range(19):
             if board[y][x] == 1:  # Синий игрок
                 pygame.draw.circle(screen, DARK_BLUE, (GRID_OFFSET_X + x * CELL_SIZE, GRID_OFFSET_Y + y * CELL_SIZE), 10)
+                pygame.draw.circle(screen, BLACK,(GRID_OFFSET_X + player_last_x * CELL_SIZE, GRID_OFFSET_Y + player_last_y * CELL_SIZE), 5)
             elif board[y][x] == 2:  # Красный игрок
                 pygame.draw.circle(screen, RED, (GRID_OFFSET_X + x * CELL_SIZE, GRID_OFFSET_Y + y * CELL_SIZE), 10)
+                pygame.draw.circle(screen, BLACK,(GRID_OFFSET_X + player_last_x * CELL_SIZE, GRID_OFFSET_Y + player_last_y * CELL_SIZE), 5)
 
 def is_fully_surrounded(x: int, y: int, board: list[list[int]], player: int) -> bool:
     """Проверяет, окружена ли группа точек со всех сторон."""
@@ -327,7 +329,8 @@ def game() -> None:
     board = [[0] * 20 for _ in range(20)]
     
     # Координаты последнего хода
-    last_move = None  
+    player_last_x = 0
+    player_last_y = 0  
     
     while True:
         # Заполняем фон белым цветом
@@ -372,7 +375,10 @@ def game() -> None:
                             player1_score += points
                         else:
                             player2_score += points
-
+                        
+                        player_last_x = grid_x
+                        player_last_y = grid_y
+                        
                         # Передача хода
                         player_turn = 3 - player_turn
 
@@ -390,7 +396,7 @@ def game() -> None:
         draw_grid()
 
         # Отрисовка последнего хода игрока
-        draw_moves(board, last_move)
+        draw_moves(board, player_last_x, player_last_y)
                 
         # Отрисовка таймера
         draw_timer(time_left)
