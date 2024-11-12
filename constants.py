@@ -5,8 +5,8 @@ pygame.init()
 
 GRID_SIZE = 20   # Размер игральной доски 20x20
 CELL_SIZE = 25   # Размер одной клетки
-GRID_OFFSET_X = 250
-GRID_OFFSET_Y = 200
+GRID_OFFSET_X = 250    # Отступ по Х для сетки
+GRID_OFFSET_Y = 200    # Отступ по Y для сетки
 
 # Время игры
 TIMER_START = 600 # 10 минут
@@ -68,10 +68,10 @@ CHANNEL_LINK = "https://web.telegram.org/a/#-4566839864"
 
 # Шрифты
 pygame.font.init()
-FONT = pygame.font.SysFont('arial', 25)
-FONT_GAME_GRID = pygame.font.SysFont('arial', 15)
-FONT_RULES = pygame.font.SysFont('arial', 20)
-FONT_LOGO = pygame.font.SysFont('arial', 55)
+FONT = pygame.font.SysFont('times new roman', 25)
+FONT_GAME_GRID = pygame.font.SysFont('times new roman', 15)
+FONT_RULES = pygame.font.SysFont('times new roman', 20)
+FONT_LOGO = pygame.font.SysFont('times new roman', 55)
 
 # Музыка
 BUTTON_CLICK_SOUND = pygame.mixer.Sound("music/a.wav")

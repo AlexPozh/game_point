@@ -1,6 +1,5 @@
 import sys
 from datetime import timedelta
-import time
 
 import pygame
 
@@ -37,6 +36,8 @@ def draw_timer(time_left: int) -> None:
     screen.blit(timer_text, (460, 150))
 
 def draw_players(
+                player1_name: str,
+                player2_name: str,
                 player_turn: int, 
                 player1_score: int = 0, 
                 player2_score: int = 0
@@ -59,13 +60,13 @@ def draw_players(
     screen.blit(PLAYER_ICON, (520, 60))
 
     # Имя игрока 1 и его счет
-    player1_name = FONT.render("Игрок 1", True, BLACK)
+    player1_name = FONT.render(player1_name, True, BLACK)
     screen.blit(player1_name, (328, 73))
     player1_score_text = FONT.render(str(player1_score), True, BLACK)
     screen.blit(player1_score_text, (350, 118))
 
     # Имя игрока 2 и его счет
-    player2_name = FONT.render("Игрок 2", True, BLACK)
+    player2_name = FONT.render(player2_name, True, BLACK)
     screen.blit(player2_name, (588, 73))
     player2_score_text = FONT.render(str(player2_score), True, BLACK)
     screen.blit(player2_score_text, (615, 118))
@@ -145,7 +146,6 @@ def draw_menu() -> None | bool:
                     click = True
 
         pygame.display.update()
-
 
 
 def draw_moves(board: list[list[int]], last_move: tuple[int, int]) -> None:
@@ -241,9 +241,9 @@ def draw_winner(text: str) -> None:
 
 def check_name(name: str) -> bool:
     """Ф-ция проверяет введенное имя на соответствие правилам"""
-    if len(name) < 2 or len(name) > 7 or "«,.:@$;\~`”»/<>+-=»" in name:
+    if len(name) == 1 or len(name) > 7 or any([letter in "«,.:@$;\~`”»/<>+-=»" for letter in name]):
         return False
-
+    return True
 
 def ask_name(player_num: int) -> str:
     """Функция для ввода имени игрока"""
@@ -254,6 +254,7 @@ def ask_name(player_num: int) -> str:
     active = False
     text = ""
     done = False
+    is_correct_name = True
 
     while not done:
         screen.fill(WHITE)
@@ -279,8 +280,8 @@ def ask_name(player_num: int) -> str:
                         elif check_name(text):
                             done = True
                         else:
-                            txt_error = FONT.render(f"Имя должно быть состоять из 2 до 7 элементов и не содержать символы «,.:@$;\~`”»/<>+-=»", True, BLACK)
-                            screen.blit(txt_error, (input_box.x - 300, input_box.y + 70))
+                            is_correct_name = False
+                            
                     elif event.key == pygame.K_BACKSPACE:
                         # Удаление символа
                         text = text[:-1]
@@ -289,6 +290,9 @@ def ask_name(player_num: int) -> str:
                         text += event.unicode
 
         # Отрисовка на экране
+        if  not is_correct_name:
+            txt_error = FONT.render(f"Нельзя использовать символы «,.:@$;\~`”»/<>+-=». Попробуй еще раз!»", True, BLACK)
+            screen.blit(txt_error, (input_box.x - 350, input_box.y + 70))
         txt_surface = FONT.render(f"Введите имя для игрока {player_num}: " + text, True, BLACK)
         screen.blit(txt_surface, (input_box.x - 300, input_box.y + 15))
         pygame.draw.rect(screen, color, input_box, 2)
@@ -300,7 +304,9 @@ def ask_name(player_num: int) -> str:
 
 def game() -> None:
     """Ф-ция для игры"""
-    # player1_name = ask_name(1)
+    player1_name = ask_name(1)
+    player2_name = ask_name(2)
+
     clock = pygame.time.Clock()
     
     player_turn = 1
@@ -356,6 +362,7 @@ def game() -> None:
                 else:
                     # Обработка хода игрока на поле
                     grid_x, grid_y = (mx - GRID_OFFSET_X) // CELL_SIZE, (my - GRID_OFFSET_Y) // CELL_SIZE
+                    print(f"Координаты мыши по X - {mx} и Y - {my}.\nВычисленные координаты X - {grid_x} и  Y - {grid_y} для точки.")
                     if 0 <= grid_x < 19 and 0 <= grid_y < 19 and board[grid_y][grid_x] == 0:
                         # Устанавливаем точку текущего игрока
                         board[grid_y][grid_x] = player_turn
@@ -366,8 +373,8 @@ def game() -> None:
                         else:
                             player2_score += points
 
-                    # Передача хода
-                    player_turn = 3 - player_turn
+                        # Передача хода
+                        player_turn = 3 - player_turn
 
         # Проверка на наведение на кнопку Меню
         if menu_button.collidepoint((mx, my)):
@@ -389,7 +396,7 @@ def game() -> None:
         draw_timer(time_left)
        
         # Отрисовка иконок игроков
-        draw_players(player_turn, player1_score, player2_score)
+        draw_players(player1_name, player2_name, player_turn, player1_score, player2_score)
 
 
         if not timer_paused:
@@ -400,22 +407,22 @@ def game() -> None:
         
             if time_left <= 0:
                 if player1_score > player2_score:
-                    draw_winner("Игрок 1 победил!")
+                    draw_winner(f"{player1_name} победил!")
                     return
 
                 elif player2_score > player1_score:
-                    draw_winner("Игрок 2 победил!")
+                    draw_winner(f"{player2_name} победил!")
                     return
                 else:
                     draw_winner("Ничья!")
                     return
 
         if player1_score > player2_score and player1_score >= POINTS:
-                draw_winner("Игрок 1 победил!")
+                draw_winner(f"{player1_name} победил!")
                 return
         
         if player2_score > player1_score and player2_score >= POINTS:
-                draw_winner("Игрок 2 победил!")
+                draw_winner(f"{player2_name} победил!")
                 return
         
         # Обновление отображения на экране
