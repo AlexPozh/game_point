@@ -365,7 +365,6 @@ def game() -> None:
                 else:
                     # Обработка хода игрока на поле
                     grid_x, grid_y = (mx - GRID_OFFSET_X) // CELL_SIZE, (my - GRID_OFFSET_Y) // CELL_SIZE
-                    print(f"Координаты мыши по X - {mx} и Y - {my}.\nВычисленные координаты X - {grid_x} и  Y - {grid_y} для точки.")
                     if 0 <= grid_x < 19 and 0 <= grid_y < 19 and board[grid_y][grid_x] == 0:
                         # Устанавливаем точку текущего игрока
                         board[grid_y][grid_x] = player_turn
