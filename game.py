@@ -150,61 +150,84 @@ def draw_menu() -> None | bool:
 
 def draw_moves(board: list[list[int]], player_last_x: int, player_last_y: int) -> None:
     """Ф-ция рисует ходы игроков"""
-    for y in range(19):
-        for x in range(19):
+    for y in range(21):
+        for x in range(21):
             if board[y][x] == 1:  # Синий игрок
                 pygame.draw.circle(screen, DARK_BLUE, (GRID_OFFSET_X + x * CELL_SIZE, GRID_OFFSET_Y + y * CELL_SIZE), 10)
                 pygame.draw.circle(screen, BLACK,(GRID_OFFSET_X + player_last_x * CELL_SIZE, GRID_OFFSET_Y + player_last_y * CELL_SIZE), 5)
             elif board[y][x] == 2:  # Красный игрок
                 pygame.draw.circle(screen, RED, (GRID_OFFSET_X + x * CELL_SIZE, GRID_OFFSET_Y + y * CELL_SIZE), 10)
                 pygame.draw.circle(screen, BLACK,(GRID_OFFSET_X + player_last_x * CELL_SIZE, GRID_OFFSET_Y + player_last_y * CELL_SIZE), 5)
-
-def is_fully_surrounded(x: int, y: int, board: list[list[int]], player: int) -> bool:
-    """Проверяет, окружена ли группа точек со всех сторон."""
-    visited = set()
-    stack = [(x, y)]
-    surrounded = True
-
-    while stack:
-        cx, cy = stack.pop()
-        visited.add((cx, cy))
-
-        # Проверяем все направления
-        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-            nx, ny = cx + dx, cy + dy
-            if 0 <= nx < 19 and 0 <= ny < 19:
-                if board[ny][nx] == 0:  # Если есть пустая клетка, группа не окружена
-                    surrounded = False
-                elif board[ny][nx] == player and (nx, ny) not in visited:
-                    stack.append((nx, ny))
-            else:
-                # Если клетка выходит за пределы поля, группа не окружена
-                surrounded = False
-
-    return surrounded, visited
+            elif board[y][x] == 3:
+                pygame.draw.circle(screen, GRAY, (GRID_OFFSET_X + x * CELL_SIZE, GRID_OFFSET_Y + y * CELL_SIZE), 10)
 
 
-def capture_group(points: set[tuple[int, int]], board: list[list[int]], player: int) -> int:
-    """Захватывает группу точек и возвращает количество захваченных очков."""
-    for (x, y) in points:
-        board[y][x] = player
-    return len(points)
+def process_board(player_turn: int, board: list[list[int]]) -> int:
+    """
+    Обрабатывает всё поле после хода игрока.
+    - Находит окружённые группы (точки противника и пустые клетки).
+    - Захватывает окружённые точки противника и помечает пустые точки как выключенные.
+    - Возвращает количество очков, полученных за этот ход.
+    """
+    def find_group(x: int, y: int) -> tuple[bool, set[tuple[int, int]], bool, bool]:
+        """
+        Находит группу точек, начиная с координат (x, y).
+        Возвращает:
+        - Окружённость группы (bool),
+        - Множество точек группы (set),
+        - Содержит ли группа точки противника (bool),
+        - Содержит ли группа пустые клетки (bool).
+        """
+        visited = set()
+        stack = [(x, y)]
+        surrounded = True
+        has_opponent = False
+        has_empty = False
+        group = set()
 
+        while stack:
+            cx, cy = stack.pop()
+            if (cx, cy) in visited:
+                continue
+            visited.add((cx, cy))
+            group.add((cx, cy))
 
-def capture_points(x: int, y: int, player_turn: int, board: list[list[int]]) -> int:
-    """Подсчитывает и захватывает окруженные группы точек противника."""
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nx, ny = cx + dx, cy + dy
+                if 0 <= nx < 19 and 0 <= ny < 19:
+                    if board[ny][nx] == 0:  # Пустая клетка
+                        has_empty = True
+                        stack.append((nx, ny))
+                    elif board[ny][nx] == 3 - player_turn:  # Точка противника
+                        has_opponent = True
+                        stack.append((nx, ny))
+                    elif board[ny][nx] == player_turn:  # Точка игрока
+                        continue
+                else:
+                    surrounded = False  # Выход за границу поля
+
+        return surrounded, group, has_opponent, has_empty
+
     captured_points = 0
-    opponent = 3 - player_turn
 
-    # Проверка всех соседей для возможного захвата групп
-    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-        nx, ny = x + dx, y + dy
-        if 0 <= nx < 19 and 0 <= ny < 19 and board[ny][nx] == opponent:
-            surrounded, points_to_capture = is_fully_surrounded(nx, ny, board, opponent)
-            if surrounded:
-                captured_points += capture_group(points_to_capture, board, player_turn)
+    # Проход по всему полю
+    for y in range(19):
+        for x in range(19):
+            if board[y][x] == 0 or board[y][x] == 3 - player_turn:
+                surrounded, group, has_opponent, has_empty = find_group(x, y)
+                if surrounded:
+                    if has_opponent:
+                        # Захватываем точки противника
+                        captured_points += len([p for p in group if board[p[1]][p[0]] == 3 - player_turn])
+                    # Помечаем все пустые точки как "выключенные"
+                    for gx, gy in group:
+                        if board[gy][gx] == 0:
+                            board[gy][gx] = 3
+                        else:
+                            board[gy][gx] = player_turn
 
     return captured_points
+
 
 def draw_winner(text: str) -> None:
     """Ф-ция рисует табличку победителя"""
@@ -296,7 +319,7 @@ def ask_name(player_num: int) -> str:
             txt_error = FONT.render(f"Нельзя использовать символы «,.:@$;\~`”»/<>+-=». Попробуй еще раз!»", True, BLACK)
             screen.blit(txt_error, (input_box.x - 350, input_box.y + 70))
         txt_surface = FONT.render(f"Введите имя для игрока {player_num}: " + text, True, BLACK)
-        screen.blit(txt_surface, (input_box.x - 300, input_box.y + 15))
+        screen.blit(txt_surface, (input_box.x - 276, input_box.y + 15))
         pygame.draw.rect(screen, color, input_box, 2)
         
         # Обновление экрана
@@ -326,7 +349,7 @@ def game() -> None:
     timer_paused = False
     
     # Сетка для отслеживания ходов игроков (0 - пустая клетка, 1 - синий, 2 - красный)
-    board = [[0] * 20 for _ in range(20)]
+    board = [[0] * 21 for _ in range(21)]
     
     # Координаты последнего хода
     player_last_x = 0
@@ -347,39 +370,43 @@ def game() -> None:
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 # Нажатие кнопки Меню
-                if menu_button.collidepoint((mx, my)):
-                    click_sound()
+                if event.button == 1:
+                    if menu_button.collidepoint((mx, my)):
+                        click_sound()
 
-                    # Таймер ставится на паузу
-                    timer_paused = not timer_paused
-                    if timer_paused:
-                        pause_ticks = pygame.time.get_ticks()
-                        if draw_menu():
-                            return
+                        # Таймер ставится на паузу
+                        timer_paused = not timer_paused
+                        if timer_paused:
+                            pause_ticks = pygame.time.get_ticks()
+                            if draw_menu():
+                                return
 
-                        # Таймер продолжает отсчет
-                        else:
-                            timer_paused = not timer_paused
-                            start_ticks += pygame.time.get_ticks() - pause_ticks
-                # Ход игроков
-                else:
-                    # Обработка хода игрока на поле
-                    grid_x, grid_y = (mx - GRID_OFFSET_X) // CELL_SIZE, (my - GRID_OFFSET_Y) // CELL_SIZE
-                    if 0 <= grid_x < 19 and 0 <= grid_y < 19 and board[grid_y][grid_x] == 0:
-                        # Устанавливаем точку текущего игрока
-                        board[grid_y][grid_x] = player_turn
-                        # Захват очков
-                        points = capture_points(grid_x, grid_y, player_turn, board)
-                        if player_turn == 1:
-                            player1_score += points
-                        else:
-                            player2_score += points
-                        
-                        player_last_x = grid_x
-                        player_last_y = grid_y
-                        
-                        # Передача хода
-                        player_turn = 3 - player_turn
+                            # Таймер продолжает отсчет
+                            else:
+                                timer_paused = not timer_paused
+                                start_ticks += pygame.time.get_ticks() - pause_ticks
+                    # Ход игроков
+                    else:
+                        # Обработка хода игрока на поле
+                        grid_x, grid_y = (mx - GRID_OFFSET_X) // CELL_SIZE, (my - GRID_OFFSET_Y) // CELL_SIZE
+                        print(f"Координаты мыши по X - {mx}, Y - {my}\nВычисленные координаты для постановки точки по X - {grid_x}, Y - {grid_y}")
+                        if 0 <= grid_x <= 20 and 0 <= grid_y <= 20 and board[grid_y][grid_x] == 0:
+                            # Устанавливаем точку текущего игрока
+                            board[grid_y][grid_x] = player_turn
+                            #
+                            # Захват очков
+                            points = process_board(player_turn, board)
+                            
+                            if player_turn == 1:
+                                player1_score += points
+                            else:
+                                player2_score += points
+                            
+                            player_last_x = grid_x
+                            player_last_y = grid_y
+                            
+                            # Передача хода
+                            player_turn = 3 - player_turn
 
         # Проверка на наведение на кнопку Меню
         if menu_button.collidepoint((mx, my)):
